@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@keyframes floatPulse {
+  0%, 100% { box-shadow: 0 10px 25px -8px rgba(37, 99, 235, 0.6); }
+  50% { box-shadow: 0 14px 30px -6px rgba(37, 99, 235, 0.75); }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.anim-fade { animation: fadeIn 0.2s ease-out both; }
+.anim-up { animation: fadeInUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-sheet { animation: sheetUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-pop { animation: popIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-bounce { animation: bounceIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-float { animation: floatPulse 2.4s ease-in-out infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 40%, #f1f5f9 80%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 0.75rem;
+}
+
+/* ===== Scrollbar ===== */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-gradient-to-b from-primary-600 to-primary-700 text-white shadow-lg shadow-primary-600/25 hover:from-primary-700 hover:to-primary-800;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 shadow-sm;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/25;
+  }
+  .card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(15,23,42,0.06)];
+  }
+  .card-hover {
+    @apply card transition-all duration-200 active:scale-[0.97] active:shadow-md hover:shadow-md hover:border-primary-100;
+  }
+  .input {
+    @apply w-full rounded-xl border border-gray-200 px-4 py-3 text-sm bg-white transition focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 placeholder:text-gray-400;
+  }
+  .label {
+    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .chip {
+    @apply px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200;
+  }
+  .chip-active {
+    @apply bg-white text-primary-700 shadow-sm ring-1 ring-white/60;
+  }
+  .chip-idle {
+    @apply bg-white/15 text-white border border-white/20;
+  }
+  .opt-card {
+    @apply flex-1 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold transition-all duration-150 text-center;
+  }
+  .opt-on {
+    @apply border-primary-600 bg-primary-50 text-primary-700;
+  }
+  .opt-off {
+    @apply border-gray-200 bg-white text-gray-600;
+  }
+  .stepper-btn {
+    @apply w-10 h-10 rounded-full border border-gray-200 bg-white text-lg font-bold text-gray-600 flex items-center justify-center transition active:scale-90 active:bg-gray-50 disabled:opacity-40;
+  }
+  .sheet-handle {
+    @apply w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4;
+  }
+}
+
+/* Backdrop blur untuk header */
+.glass-header {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Safe area untuk floating bar */
+.pb-safe {
+  padding-bottom: calc(0.5rem + var(--safe-bottom));
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
