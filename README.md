@@ -1,115 +1,96 @@
-# E-Kantin Mobile (PWA)
+# E-Kantin Mobile
 
-Versi mobile dari E-Kantin — aplikasi web PWA yang bisa di-install di HP (Android/iOS), terpisah dari versi web.
-
-> ⚠️ **Ini project terpisah** dari versi web (`kantin/ekantin`): database, backend, dan frontend sendiri. Data tidak terhubung dengan versi web.
-
-## Struktur
-
-```
-ekantin-mobile/
-├── backend/    Laravel 12 REST API + Sanctum  → port 8001, DB: ekantin_mobile
-└── frontend/   React + Vite + Tailwind + PWA  → port 5173
-```
+Aplikasi pemesanan kantin berbasis PWA, dengan REST API Laravel dan dua antarmuka React: customer dan staf (admin/kasir).
 
 ## Prasyarat
 
-- PHP 8.2 (XAMPP)
-- MySQL/MariaDB (XAMPP) — harus menyala
-- Node.js 20+ & npm
-- Composer (`php C:\xampp\htdocs\composer.phar ...` jika tidak di PATH)
+- PHP 8.2+ dengan ekstensi PDO MySQL, OpenSSL, Mbstring, XML, Ctype, JSON, Fileinfo, GD, dan Zip
+- Composer 2
+- MySQL/MariaDB (misalnya XAMPP)
+- Node.js 20+ dan npm
 
-## Cara Menjalankan
+## Setup lokal (Windows/XAMPP)
 
-### 1. Backend
+1. Nyalakan MySQL di XAMPP dan buat database kosong bernama `ekantin_mobile` (collation `utf8mb4_unicode_ci`).
+2. Siapkan backend:
 
-```bash
-cd backend
+   ```powershell
+   cd backend
+   composer install
+   Copy-Item .env.example .env
+   php artisan key:generate
+   php artisan migrate --seed
+   php artisan storage:link
+   php artisan serve --host=0.0.0.0 --port=8001
+   ```
 
-# database (buat dulu: CREATE DATABASE ekantin_mobile)
-php artisan migrate --seed
+   Jika `composer` atau `php` tidak ditemukan, tambahkan PHP dan Composer ke PATH atau jalankan executable dari instalasi XAMPP.
 
-# jalankan server di port 8001
-php artisan serve --host=127.0.0.1 --port=8001
-```
+3. Jalankan aplikasi customer di terminal baru:
 
-### 2. Frontend
+   ```powershell
+   cd frontend
+   npm ci
+   npm run dev -- --host 0.0.0.0
+   ```
 
-```bash
-cd frontend
-npm install
-npm run dev        # → http://localhost:5173
-```
+   Buka `http://localhost:5173`.
 
-Untuk production build (PWA): `npm run build` → folder `dist/` (bisa di-deploy ke web server mana pun).
+4. Jalankan aplikasi staf di terminal lain:
 
-### 3. Buka di HP
+   ```powershell
+   cd frontend-staff
+   npm ci
+   npm run dev -- --host 0.0.0.0
+   ```
 
-- Pastikan HP dan komputer satu jaringan Wi-Fi.
-- Buka `http://<IP-KOMPUTER>:5173` di browser HP.
-- Menu **⋮ → Tambahkan ke Layar Utama** (Add to Home Screen) → jadi aplikasi.
+   Buka `http://localhost:5174/login`.
 
-## Akun Demo (Staf)
+Seeder membuat akun demo berikut; ubah password setelah masuk dan jangan gunakan kredensial demo di server publik:
 
-| Role  | Email             | Password  |
-|-------|-------------------|-----------|
-| Admin | admin@ekantin.com | admin123  |
-| Kasir | kasir@ekantin.com | kasir123  |
-
-Customer tidak perlu login (tamu), riwayat disimpan di localStorage HP.
-
-## Halaman
-
-**Customer (tamu):**
-- `/` — browse menu, cari, kategori, keranjang, checkout (tunai/QRIS), nawar min Rp 5.000, +nasi, suhu dingin/panas
-- `/track/:id` — lacak pesanan live (poll 5 detik, notifikasi suara, bisa batal selagi pending)
-- `/riwayat` — riwayat pesanan hari ini (tersimpan di perangkat)
-- `/struk/:queue` — struk (cetak / unduh PNG)
-- `/bayar/:id` — pembayaran QRIS (simulasi)
-- `/cek-status` — cek status via nomor antrean
-- `/antrian` — layar antrian besar untuk TV/monitor kantin
-
-**Staf (`/login`):**
-- **Kasir** `/kasir` — POS: pilih menu, cart, checkout, proses/selesai/batalkan pesanan, notifikasi bayar QRIS (poll 3 detik)
-- **Admin** `/admin` — dashboard statistik, CRUD kategori/menu/user, laporan harian/bulanan + export PDF & Excel, menu favorit/best seller
-
-## API Utama
-
-| Method | Endpoint | Keterangan |
-|--------|----------|------------|
-| GET | `/api/categories`, `/api/menu-items` | publik |
-| POST | `/api/orders` | checkout customer (throttle 10/menit) |
-| GET | `/api/orders/{id}/status` | lacak pesanan |
-| GET | `/api/queue-status/{no}`, `/api/receipt/{no}` | cek status & struk |
-| POST | `/api/payment/{id}/qris-confirm` | simulasi bayar QRIS |
-| POST | `/api/login` | token staf (Sanctum) |
-| * | `/api/admin/*` | CRUD + laporan + export (role:admin) |
-| * | `/api/kasir/*` | POS + poll (role:kasir) |
-
-## Tests
-
-```bash
-cd backend
-php artisan test    # 18 tests — auth, checkout, nawar, nasi, QRIS, POS, admin
-```
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@ekantin.com` | `admin123` |
+| Kasir | `kasir@ekantin.com` | `kasir123` |
 
 ## Konfigurasi
 
-`backend/.env`:
+Salin `backend/.env.example` ke `backend/.env`, lalu sesuaikan koneksi MySQL (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`). `FRONTEND_URL` harus cocok dengan origin frontend customer. Jika aplikasi staf berjalan di origin berbeda, tambahkan origin tersebut ke `backend/config/cors.php`.
 
-- `DB_DATABASE=ekantin_mobile` — nama database
-- `FRONTEND_URL=http://localhost:5173` — origin yang diizinkan CORS
-- `RICE_PRICE=2000` — harga tambahan nasi
+Frontend memakai `http://127.0.0.1:8001/api` secara default. Untuk mengakses lewat HP, buat file `.env` di masing-masing folder frontend dengan alamat IP komputer yang dapat dijangkau HP, misalnya:
 
-`frontend/` (opsional, via env):
+```dotenv
+VITE_API_URL=http://192.168.1.10:8001/api
+VITE_STORAGE_URL=http://192.168.1.10:8001/storage
+```
 
-- `VITE_API_URL` — default `http://127.0.0.1:8001/api`
-- `VITE_STORAGE_URL` — default `http://127.0.0.1:8001/storage`
+Ganti alamat contoh dengan IP komputer di jaringan lokal. Pastikan firewall mengizinkan port 8001, 5173, dan 5174. Untuk production, gunakan HTTPS, konfigurasi domain/API dan CORS secara eksplisit, serta ganti akun demo.
 
-> Jika diakses dari HP, ganti `VITE_API_URL` ke `http://<IP-KOMPUTER>:8001/api` lalu build ulang.
+`RICE_PRICE` dan `MIN_BARGAIN_PRICE` mengatur harga nasi tambahan dan harga minimum tawar. QRIS di aplikasi ini masih simulasi dan belum mengonfirmasi pembayaran dari penyedia pembayaran sungguhan.
 
-## Catatan
+## Build dan pemeriksaan
 
-- **QRIS simulasi** — tidak terhubung payment gateway sungguhan (sama seperti versi web).
-- **Data terpisah** — menu/akun di versi mobile diisi lewat seeder & halaman admin sendiri.
-- Reset data: `php artisan migrate:fresh --seed`
+```bash
+cd backend
+php artisan test
+```
+
+Build frontend customer dan staf secara terpisah:
+
+```bash
+cd frontend
+npm ci
+npm run build
+
+cd ../frontend-staff
+npm ci
+npm run build
+```
+
+## Fitur
+
+- Customer tanpa login: melihat menu, keranjang, checkout, cek status, antrean, riwayat lokal, dan struk.
+- Staf: login Sanctum, POS kasir, pengelolaan menu/kategori/pengguna, laporan serta ekspor.
+- API: Laravel 12, role admin/kasir, dan database MySQL/MariaDB.
+
+Data customer dan staf disimpan pada backend aplikasi ini; riwayat pribadi customer tersimpan di perangkatnya. Jangan menjalankan `migrate:fresh` pada database yang berisi data penting karena perintah tersebut menghapus semua tabel.

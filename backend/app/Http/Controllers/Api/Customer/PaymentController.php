@@ -10,6 +10,18 @@ class PaymentController extends Controller
 {
     public function qrisConfirm(Order $order): JsonResponse
     {
+        if ($order->payment_method !== 'qris') {
+            return response()->json([
+                'message' => 'Pesanan ini tidak menggunakan pembayaran QRIS.',
+            ], 422);
+        }
+
+        if ($order->status === 'cancelled') {
+            return response()->json([
+                'message' => 'Pembayaran tidak dapat dikonfirmasi untuk pesanan yang dibatalkan.',
+            ], 409);
+        }
+
         if ($order->payment_status !== 'paid') {
             $order->update([
                 'payment_status' => 'paid',
@@ -17,10 +29,12 @@ class PaymentController extends Controller
             ]);
         }
 
+        $order->refresh();
+
         return response()->json([
             'message' => 'Pembayaran berhasil.',
-            'payment_status' => $order->fresh()->payment_status,
-            'paid_at' => $order->fresh()->paid_at?->format('d M Y H:i:s'),
+            'payment_status' => $order->payment_status,
+            'paid_at' => $order->paid_at?->format('d M Y H:i:s'),
         ]);
     }
 
