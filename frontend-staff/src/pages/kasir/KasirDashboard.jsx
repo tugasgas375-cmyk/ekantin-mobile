@@ -101,10 +101,10 @@ export default function KasirDashboard() {
     : categories.flatMap((c) => c.menu_items || []);
 
   const addToCart = (menu) => {
-    if (menu.has_temperature_option) {
+    if (menu.has_temperature_option || menu.allow_extra_rice) {
       setOptionItem(menu);
-      setOptionTemp('Dingin');
-      setOptionRice(menu.allow_extra_rice ? 0 : 0);
+      setOptionTemp(menu.has_temperature_option ? 'Dingin' : null);
+      setOptionRice(0);
       return;
     }
     pushCart(menu, null, 0);
@@ -114,7 +114,7 @@ export default function KasirDashboard() {
     const key = `${menu.id}_${temperature || ''}_${riceQty || 0}`;
     setCart((prev) => {
       const existing = prev.find((i) => i.key === key);
-      if (existing) return prev.map((i) => (i.key === key ? { ...i, quantity: i.quantity + 1 } : i));
+      if (existing) return prev.map((i) => (i.key === key ? { ...i, quantity: Math.min(99, i.quantity + 1) } : i));
       return [
         ...prev,
         {
@@ -139,7 +139,7 @@ export default function KasirDashboard() {
   const updateQty = (key, delta) => {
     setCart((prev) =>
       prev
-        .map((i) => (i.key === key ? { ...i, quantity: i.quantity + delta } : i))
+        .map((i) => (i.key === key ? { ...i, quantity: Math.min(99, i.quantity + delta) } : i))
         .filter((i) => i.quantity > 0)
     );
   };
@@ -165,7 +165,8 @@ export default function KasirDashboard() {
           id: i.id,
           quantity: i.quantity,
           temperature: i.temperature || undefined,
-          extra_rice: i.extra_rice > 0 ? 1 : undefined,
+          // Backend expects extra rice per menu unit and multiplies it by quantity.
+          extra_rice: i.extra_rice || 0,
         })),
       });
       toast.success(res.data.message);
@@ -226,7 +227,6 @@ export default function KasirDashboard() {
       </header>
 
       <main className="px-4 py-4">
-        {/* ===== TAB MENU ===== */}
         {tab === 'menu' && (
           <>
             <div className="flex gap-2 overflow-x-auto pb-3">
@@ -266,7 +266,6 @@ export default function KasirDashboard() {
           </>
         )}
 
-        {/* ===== TAB KERANJANG ===== */}
         {tab === 'keranjang' && (
           <div className="space-y-4">
             <div className="card p-4 space-y-3">
@@ -346,7 +345,7 @@ export default function KasirDashboard() {
                       <div className="flex items-center gap-2">
                         <button className="w-8 h-8 rounded-full border border-gray-300" onClick={() => updateQty(item.key, -1)}>−</button>
                         <span className="w-6 text-center text-sm">{item.quantity}</span>
-                        <button className="w-8 h-8 rounded-full border border-gray-300" onClick={() => updateQty(item.key, 1)}>+</button>
+                        <button className="w-8 h-8 rounded-full border border-gray-300" onClick={() => updateQty(item.key, 1)} disabled={item.quantity >= 99}>+</button>
                       </div>
                     </div>
                   ))}
@@ -365,7 +364,6 @@ export default function KasirDashboard() {
           </div>
         )}
 
-        {/* ===== TAB PESANAN ===== */}
         {tab === 'pesanan' && (
           <div className="space-y-3">
             {orders.length === 0 ? (
@@ -433,7 +431,6 @@ export default function KasirDashboard() {
         )}
       </main>
 
-      {/* Floating total keranjang */}
       {cart.length > 0 && tab !== 'keranjang' && (
         <button
           onClick={() => setTab('keranjang')}
@@ -443,7 +440,6 @@ export default function KasirDashboard() {
         </button>
       )}
 
-      {/* Modal opsi item */}
       {optionItem && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center" onClick={() => setOptionItem(null)}>
           <div className="bg-white w-full max-w-lg rounded-t-3xl p-5 pb-8" onClick={(e) => e.stopPropagation()}>

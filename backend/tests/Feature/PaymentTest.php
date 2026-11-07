@@ -16,7 +16,7 @@ class PaymentTest extends TestCase
 
         $this->postJson("/api/payment/{$order->id}/qris-confirm")
             ->assertStatus(422)
-            ->assertJsonPath('payment_status', null);
+            ->assertJsonPath('message', 'Pesanan ini tidak menggunakan pembayaran QRIS.');
 
         $this->assertSame('unpaid', $order->fresh()->payment_status);
     }
